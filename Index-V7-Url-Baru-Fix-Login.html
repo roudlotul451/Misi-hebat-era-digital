@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Misi Anak Hebat - FINAL V7 - URL Baru</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Nunito,sans-serif;background:#f0faf2;color:#1b3a2a}
+.font-baloo{font-family:'Baloo 2',cursive}
+.card{background:#fff;border-radius:20px;border:1px solid #d8f0de;box-shadow:0 8px 24px rgba(27,107,54,.08)}
+.btn{padding:12px 20px;border-radius:999px;border:none;font-weight:800;cursor:pointer;font-family:'Baloo 2';transition:.2s}
+.btn:active{transform:scale(.97)}
+.btn-green{background:#1b6b36;color:#fff}
+.btn-yellow{background:#ffcf4d;color:#5a4100;border:1px solid #f1c02f}
+.btn-ghost{background:#f2faf4;border:1px solid #d8f0de;color:#1b6b36}
+.misi-card{cursor:pointer;transition:.2s}
+.misi-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.12)}
+.confetti{position:fixed;top:-10px;font-size:24px;animation:fall 3s linear forwards;pointer-events:none;z-index:9999}
+@keyframes fall{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(110vh) rotate(720deg)}}
+.bintang{font-size:24px;cursor:pointer;transition:.15s;display:inline-block}
+.bintang.active{filter:drop-shadow(0 0 6px #ffcf4d)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<input type="file" id="fileInput" accept="image/*" style="display:none">
+<script>
+// URL BARU KAMU - SUDAH TERTANAM!
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbyoPh_c9KGZ-GjFlozy8mMM8FyFC5-ZdtT-1-FohsFJakBEG9RjD3dVVwluiI19aEUzoA/exec";
+const ANANDA_KB2 = ["abidar","aga","sarfaraz","raykarl","zayn","hanif","haikal","arya","abie","abyan","fassya","kinza","feli","zahira","qhaira","sena","gra","kenzo","yusuf","kai","ibnu","queena","aleena","asha","eiliya","jenna","zea","zura","zalina","shabira"];
+const DEFAULT_MISSIONS = [
+{id:"cium_tangan", judul:"Cium Tangan & Peluk Ayah Bunda", deskripsi:"Pagi hari cium tangan, peluk dan ucap salam pada Ayah Bunda", indikator:"Kasih Sayang", icon:"🤲"},
+{id:"beres_mainan", judul:"Bantu Bereskan Mainan", deskripsi:"Bereskan mainan sendiri setelah bermain", indikator:"Mandiri", icon:"🧸"},
+{id:"ucap_terima", judul:"Ucapkan Terima Kasih", deskripsi:"Ucapkan terima kasih setelah dibantu Ayah Bunda", indikator:"Sopan", icon:"🙏"},
+{id:"doa_ayahbunda", judul:"Doakan Ayah Bunda", deskripsi:"Berdoa untuk Ayah Bunda setelah sholat", indikator:"Ikhlas", icon:"🤲"},
+{id:"bantu_dirumah", judul:"Bantu Pekerjaan Rumah", deskripsi:"Bantu menyapu atau merapikan tempat tidur", indikator:"Mandiri", icon:"🧹"},
+{id:"sopan_santun", judul:"Bicara Sopan & Santun", deskripsi:"Bicara dengan lembut dan sopan kepada Ayah Bunda", indikator:"Sopan", icon:"😊"},
+{id:"berbagi", judul:"Berbagi dengan Saudara", deskripsi:"Berbagi mainan atau makanan dengan saudara", indikator:"Kasih Sayang", icon:"💝"},
+{id:"taat_atuan", judul:"Taat Aturan di Rumah", deskripsi:"Mendengarkan nasihat Ayah Bunda", indikator:"Ikhlas", icon:"⭐"}
+];
+
+let state = {
+  role: 'wali',
+  selectedAnanda: null,
+  selectedMisi: null,
+  guruLogin: localStorage.getItem('guruLogin')==='true',
+  beranda: JSON.parse(localStorage.getItem('beranda')||'{"judul":"Misi Anak Hebat - Birrul Walidain KB 2","ayat":"Dan Kami perintahkan kepada manusia agar berbuat baik kepada kedua orang tuanya (QS. Al-Ankabut:8)","sambutan":"Assalamualaikum Ayah Bunda Hebat! Mari bimbing Ananda menjadi anak sholeh/sholehah yang berbakti kepada Ayah Bunda."}'),
+  missions: JSON.parse(localStorage.getItem('missions')||JSON.stringify(DEFAULT_MISSIONS)),
+  anandas: JSON.parse(localStorage.getItem('anandas')|| JSON.stringify(ANANDA_KB2.map(n=>({nama:n, kelas:'KB 2', missions:{}})))),
+  sheetUrl: SHEET_URL
+};
+
+function saveLocal(){
+  localStorage.setItem('anandas', JSON.stringify(state.anandas));
+  localStorage.setItem('missions', JSON.stringify(state.missions));
+  localStorage.setItem('beranda', JSON.stringify(state.beranda));
+  localStorage.setItem('guruLogin', state.guruLogin?'true':'false');
+}
+
+function compressImage(file){
+  return new Promise(resolve=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        const max = 600;
+        if(w>max || h>max){
+          if(w>h){ h = h*max/w; w = max; } else { w = w*max/h; h = max; }
+        }
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img,0,0,w,h);
+        let base64 = canvas.toDataURL('image/jpeg', 0.5);
+        if(base64.length > 35000){
+          canvas.width = w*0.6; canvas.height = h*0.6;
+          ctx.drawImage(img,0,0,canvas.width,canvas.height);
+          base64 = canvas.toDataURL('image/jpeg', 0.35);
+        }
+        resolve({base64, info:`Foto ${(file.size/1024/1024).toFixed(2)}MB -> ${(base64.length*0.75/1024).toFixed(0)}KB`});
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function syncToSheets(){
+  const btn = document.getElementById('syncBtn');
+  if(btn){ btn.textContent='⏳ Menyimpan...'; btn.disabled=true; }
+  try{
+    const payload = { type:'misi_anak_hebat', timestamp:new Date().toISOString(), classes:['KB 1','KB 2'], missions:state.missions, anandas:state.anandas };
+    const res = await fetch(state.sheetUrl, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(payload) });
+    const txt = await res.text();
+    console.log(txt);
+    let j; try{ j=JSON.parse(txt); }catch(e){ j={}; }
+    if(j.status==='ok'){
+      alert(`✅ BERHASIL SIMPAN LIVE ke Sheets BARU!\n\njumlahAnanda: ${j.jumlahAnanda}\njumlahMisiTerisi: ${j.jumlahMisiTerisi}\noriginalSize: ${j.originalSize} -> cleanSize: ${j.cleanSize}\n\nCek Google Sheet > BUKTI_WALIMURID & REKAP_LIVE!`);
+    } else if(txt.includes('ok') || txt.length<500){
+      alert(`✅ Terkirim! Response: ${txt.substring(0,400)}\n\nCek Google Sheet kamu!`);
+    } else {
+      alert(`Response: ${txt.substring(0,500)}`);
+    }
+  }catch(err){
+    alert('❌ Gagal sync: '+err.message+'\n\nPastikan:\n1. Code GS di https://script.google.com sudah pakai Code V5\n2. Deploy > Anyone\n3. Sheet di-share Anyone with link');
+  }
+  if(btn){ btn.textContent='⬆️ Simpan ke Sheets LIVE'; btn.disabled=false; }
+  render();
+}
+
+async function loadFromSheets(){
+  try{
+    const res = await fetch(state.sheetUrl);
+    const txt = await res.text();
+    let data;
+    try{ data = JSON.parse(txt); } catch(e){ alert('Sheet masih [] atau belum ada data. Response: '+txt.substring(0,200)); return; }
+    if(data.anandas && data.anandas.length>0){ state.anandas=data.anandas; saveLocal(); alert('✅ Load berhasil! '+data.anandas.length+' ananda'); render(); }
+    else if(Array.isArray(data) && data.length>0){ state.anandas=data; saveLocal(); render(); }
+    else alert('Sheet masih kosong [] - isi dulu dari aplikasi lalu Simpan');
+  }catch(e){ alert('Gagal load: '+e.message); }
+}
+
+function confetti(){
+  for(let i=0;i<25;i++){ const d=document.createElement('div'); d.className='confetti'; d.style.left=Math.random()*100+'vw'; d.textContent=['🎉','⭐','💖'][Math.floor(Math.random()*3)]; document.body.appendChild(d); setTimeout(()=>d.remove(),3000); }
+}
+
+function render(){
+  const app = document.getElementById('app');
+  let html = `<div style="background:#fff;border-bottom:1px solid #d8f0de;position:sticky;top:0;z-index:100;padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
+    <div style="display:flex;gap:12px;align-items:center"><div style="width:40px;height:40px;background:#1b6b36;border-radius:12px;display:grid;place-items:center;color:#fff;font-family:Baloo 2;font-size:20px">M</div><div><div class="font-baloo" style="font-weight:800;line-height:1">Misi Anak Hebat</div><div style="font-size:10px;color:#6b8a74">V7 URL BARU • KB 2 • Kompresi Otomatis</div></div></div>
+    <div style="display:flex;gap:6px"><button class="btn btn-ghost" style="padding:8px 12px;font-size:11px" onclick="state.role='wali';state.selectedAnanda=null;state.selectedMisi=null;render()">Wali</button><button class="btn ${state.guruLogin?'btn-green':'btn-ghost'}" style="padding:8px 12px;font-size:11px" onclick="showGuru()">${state.guruLogin?'Guru ✅':'Guru'}</button></div></div>`;
+
+  if(state.role==='wali' && state.selectedAnanda===null){
+    html+=`<div style="max-width:1100px;margin:0 auto;padding:16px"><div class="card" style="padding:16px;margin-bottom:16px;background:linear-gradient(135deg,#e7f6eb,#fff7dc)"><div class="font-baloo" style="font-size:20px;font-weight:800">${state.beranda.judul}</div><div style="font-size:11px;color:#6b8a74;margin:6px 0;font-style:italic">"${state.beranda.ayat}"</div><div style="font-size:13px">${state.beranda.sambutan}</div><div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap"><span style="background:#1b6b36;color:#fff;padding:5px 10px;border-radius:999px;font-size:10px;font-weight:800">KB 2: 30 Ananda</span><span style="background:#e7f6eb;border:1px solid #c8e8ce;padding:5px 10px;border-radius:999px;font-size:10px;font-weight:800">LIVE: URL BARU AKTIF ✅</span></div><div style="margin-top:8px;font-size:10px;word-break:break-all;background:#fff;padding:6px 10px;border-radius:8px;border:1px solid #d8f0de">${state.sheetUrl}</div></div><div class="font-baloo" style="font-weight:800;margin-bottom:10px">Pilih Nama Ananda KB 2 👇</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">`;
+    state.anandas.forEach((a,i)=>{ const selesai=Object.values(a.missions||{}).filter(m=>m.selesai).length; const bintang=Object.values(a.missions||{}).reduce((s,m)=>s+(m.bintang||0),0); html+=`<div class="card misi-card" style="padding:12px" onclick="openAnanda(${i})"><div style="display:flex;justify-content:space-between"><div style="font-weight:800;text-transform:capitalize;font-size:14px">${a.nama}</div><div style="font-size:10px;background:#f2faf4;padding:2px 6px;border-radius:999px">KB 2</div></div><div style="font-size:11px;color:#6b8a74;margin-top:4px">${selesai}/8 • ${bintang} ⭐</div><div style="margin-top:6px;height:5px;background:#e7f6eb;border-radius:999px;overflow:hidden"><div style="height:100%;width:${selesai/8*100}%;background:#1b6b36"></div></div></div>`; });
+    html+=`</div></div>`;
+  }
+
+  if(state.selectedAnanda!==null){
+    const ananda = state.anandas[state.selectedAnanda];
+    html+=`<div style="max-width:900px;margin:0 auto;padding:12px"><button class="btn btn-ghost" style="margin-bottom:10px;padding:8px 14px;font-size:12px" onclick="state.selectedAnanda=null;state.selectedMisi=null;render()">⬅ Kembali</button><div class="card" style="padding:16px;margin-bottom:12px"><div style="display:flex;justify-content:space-between"><div><div class="font-baloo" style="font-size:22px;font-weight:800;text-transform:capitalize">${ananda.nama}</div><div style="font-size:11px;color:#6b8a74">${Object.values(ananda.missions||{}).filter(m=>m.selesai).length}/8 Selesai</div></div><button id="syncBtn" class="btn btn-green" style="padding:8px 14px;font-size:11px" onclick="syncToSheets()">⬆️ Simpan LIVE</button></div></div><div style="display:grid;gap:10px">`;
+    state.missions.forEach(misi=>{ const prog=(ananda.missions||{})[misi.id]||{}; html+=`<div class="card misi-card" style="padding:14px;border-left:5px solid ${prog.selesai?'#1b6b36':'#ffcf4d'}" onclick="openMisi('${misi.id}')"><div style="display:flex;gap:10px"><div style="font-size:24px">${misi.icon}</div><div style="flex:1"><div style="display:flex;justify-content:space-between"><div class="font-baloo" style="font-weight:800;font-size:14px">${misi.judul}</div><div style="font-size:10px;padding:3px 8px;border-radius:999px;background:${prog.selesai?'#e7f6eb':'#fff7dc'}">${prog.selesai?'✅ Selesai':'⏳ Belum'}</div></div><div style="font-size:11px;color:#6b8a74">${misi.deskripsi}</div>${prog.bintang?`<div style="font-size:11px;margin-top:4px">${'⭐'.repeat(prog.bintang)} ${prog.bintang} bintang</div>`:''}${prog.komentar?`<div style="margin-top:6px;background:#f6fbf6;border:1px dashed #c8e8ce;padding:6px 10px;border-radius:10px;font-size:11px">Cerita: ${prog.komentar}</div>`:''}${prog.foto?`<img src="${prog.foto}" style="margin-top:6px;width:100%;max-width:280px;border-radius:10px;border:1px solid #d8f0de">`:''}</div></div></div>`; });
+    html+=`</div>`;
+    if(state.selectedMisi){
+      const misi = state.missions.find(x=>x.id===state.selectedMisi); const prog=(ananda.missions||{})[misi.id]||{};
+      html+=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);z-index:200;display:grid;place-items:center;padding:12px" onclick="if(event.target===this){state.selectedMisi=null;render()}"><div class="card" style="width:100%;max-width:460px;padding:18px;max-height:92vh;overflow:auto"><div style="display:flex;justify-content:space-between"><div class="font-baloo" style="font-weight:800">${misi.icon} ${misi.judul}</div><button class="btn btn-ghost" style="padding:4px 10px" onclick="state.selectedMisi=null;render()">✕</button></div><div style="font-size:11px;color:#6b8a74;margin:6px 0">${misi.deskripsi}</div>${prog.foto?`<img src="${prog.foto}" style="width:100%;border-radius:10px;margin:8px 0"><div style="font-size:10px;color:#6b8a74">${prog.compressInfo||''}</div>`:`<div style="padding:20px;border:2px dashed #d8f0de;border-radius:10px;text-align:center;color:#9aaea0;font-size:11px">Belum ada bukti</div>`}<button class="btn btn-yellow" style="width:100%;margin-top:8px;padding:10px" onclick="uploadFoto()">📤 ${prog.foto?'Ganti Foto':'Upload Foto (auto kompres)'} </button><textarea id="komentar" placeholder="Alhamdulillah hari ini ananda..." style="margin-top:10px;width:100%;min-height:70px;border-radius:10px;border:1px solid #d8f0de;padding:10px;font-size:12px">${prog.komentar||''}</textarea><button class="btn btn-green" style="width:100%;margin-top:10px;padding:12px" onclick="selesaiMisi()">✅ Selesai - Alhamdulillah</button><div style="font-size:10px;color:#6b8a74;text-align:center;margin-top:6px">Foto otomatis dikompresi 3MB→20KB agar muat di Sheets</div></div></div>`;
+    }
+    html+=`</div>`;
+  }
+
+  if(state.role==='guru'){
+    if(!state.guruLogin){
+      html+=`<div style="max-width:380px;margin:30px auto;padding:20px" class="card"><div class="font-baloo" style="font-size:20px;font-weight:800">Login Guru</div><div style="font-size:12px;color:#6b8a74;margin-top:4px">Password: <b>misihebat</b> (huruf kecil semua)</div><input id="passInput" type="password" placeholder="ketik: misihebat" style="margin-top:12px;width:100%;padding:12px 16px;border-radius:999px;border:1px solid #d8f0de"><div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-ghost" style="flex:1" onclick="state.role='wali';render()">Batal</button><button class="btn btn-green" style="flex:1" onclick="doLoginGuru()">Masuk</button></div><div style="margin-top:12px;font-size:11px;background:#fff7dc;border:1px solid #ffe9a8;padding:8px 12px;border-radius:10px">Jika tidak bisa login: clear cache / coba tab incognito / pastikan ketik huruf kecil semua: misihebat</div></div>`;
+    } else {
+      html+=`<div style="max-width:1100px;margin:0 auto;padding:12px"><div class="card" style="padding:14px;margin-bottom:12px;background:linear-gradient(135deg,#fff7dc,#e7f6eb)"><div class="font-baloo" style="font-weight:800">Panel Guru - URL BARU AKTIF ✅</div><div style="font-size:10px;word-break:break-all;margin-top:4px;background:#fff;padding:6px 10px;border-radius:8px;border:1px solid #d8f0de">${state.sheetUrl}</div><div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap"><button id="syncBtn" class="btn btn-green" style="padding:8px 12px;font-size:11px" onclick="syncToSheets()">⬆️ Simpan ke Sheets LIVE</button><button class="btn btn-ghost" style="padding:8px 12px;font-size:11px" onclick="loadFromSheets()">⬇️ Load dari Sheets LIVE</button><button class="btn btn-ghost" style="padding:8px 12px;font-size:11px" onclick="testKoneksi()">🔗 Test Koneksi</button><button class="btn btn-ghost" style="padding:8px 12px;font-size:11px" onclick="state.guruLogin=false;saveLocal();state.role='wali';render()">Logout</button></div></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">`;
+      state.anandas.forEach((a,i)=>{ html+=`<div class="card" style="padding:12px"><div style="font-weight:800;text-transform:capitalize;font-size:14px">${a.nama}</div><div style="margin-top:6px;display:grid;gap:5px">`; state.missions.forEach(m=>{ const p=(a.missions||{})[m.id]||{}; html+=`<div style="display:flex;justify-content:space-between;align-items:center;background:${p.selesai?'#f6fbf6':'#fff'};border:1px solid #eee;padding:5px 8px;border-radius:8px"><div style="font-size:10px">${m.icon} ${m.judul.substring(0,16)}</div><div>${[1,2,3,4].map(s=>`<span class="bintang" style="${p.bintang>=s?'':'opacity:.3'}" onclick="beriBintang(${i},'${m.id}',${s})">⭐</span>`).join('')}</div></div>`; }); html+=`</div><button class="btn btn-ghost" style="width:100%;margin-top:6px;padding:5px;font-size:10px" onclick="openAnanda(${i});">Lihat Detail</button></div>`; });
+      html+=`</div></div>`;
+    }
+  }
+
+  html+=`<div style="margin-top:16px;border-top:1px solid #d8f0de;background:#fff;padding:10px 16px;font-size:10px;color:#6b8a74;display:flex;justify-content:space-between;flex-wrap:wrap"><div>KB 2 • 30 Ananda • V7 URL Baru • ${new Date().getFullYear()}</div><div>LIVE: ...${state.sheetUrl.slice(-30)}</div></div>`;
+  app.innerHTML = html;
+}
+
+function openAnanda(i){ state.selectedAnanda=i; state.selectedMisi=null; state.role='wali'; render(); }
+function openMisi(id){ state.selectedMisi=id; render(); }
+function showGuru(){ state.role='guru'; render(); }
+function doLoginGuru(){
+  const p = (document.getElementById('passInput')?.value||'').trim().toLowerCase();
+  if(p==='misihebat'){ state.guruLogin=true; saveLocal(); state.role='guru'; render(); }
+  else alert('❌ Password salah! Ketik huruf kecil semua: misihebat\n\nKamu ketik: "'+p+'"');
+}
+function beriBintang(ai, mi, b){ if(!state.anandas[ai].missions) state.anandas[ai].missions={}; if(!state.anandas[ai].missions[mi]) state.anandas[ai].missions[mi]={}; state.anandas[ai].missions[mi].bintang=b; state.anandas[ai].missions[mi].selesai=true; saveLocal(); render(); if(confirm(`Beri ${b} ⭐ ? Simpan ke Sheets?`)) syncToSheets(); }
+function uploadFoto(){ document.getElementById('fileInput').click(); }
+document.getElementById('fileInput').addEventListener('change', async e=>{ const f=e.target.files[0]; if(!f) return; const r=await compressImage(f); const an=state.anandas[state.selectedAnanda]; if(!an.missions) an.missions={}; if(!an.missions[state.selectedMisi]) an.missions[state.selectedMisi]={}; an.missions[state.selectedMisi].foto=r.base64; an.missions[state.selectedMisi].compressInfo=r.info; saveLocal(); render(); alert(r.info); });
+function selesaiMisi(){ const k=document.getElementById('komentar').value; if(!k.trim()){ alert('Isi cerita dulu Bunda!'); return; } const an=state.anandas[state.selectedAnanda]; if(!an.missions) an.missions={}; if(!an.missions[state.selectedMisi]) an.missions[state.selectedMisi]={}; const m=state.missions.find(x=>x.id===state.selectedMisi); an.missions[state.selectedMisi].komentar=k; an.missions[state.selectedMisi].judul=m.judul; an.missions[state.selectedMisi].selesai=true; an.missions[state.selectedMisi].waktu=new Date().toLocaleString('id-ID'); saveLocal(); confetti(); render(); setTimeout(()=>{ if(confirm('Alhamdulillah! 🎉\n\nKirim ke Google Sheets BARU sekarang?')) syncToSheets(); }, 600); }
+async function testKoneksi(){ try{ const r=await fetch(state.sheetUrl); const t=await r.text(); alert('✅ Koneksi OK ke URL BARU!\n\nResponse: '+t.substring(0,300)+'\n\nURL: '+state.sheetUrl); }catch(e){ alert('❌ Gagal: '+e.message+'\n\nPastikan:\n1. Deploy Anyone\n2. Code V5 sudah dipaste\n3. Buka URL di incognito harus muncul []'); } }
+
+render();
+</script>
+</body>
+</html>
