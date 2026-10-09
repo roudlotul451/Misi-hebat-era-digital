@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Misi Anak Hebat V10.1 - FIX KB 0</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Nunito,sans-serif;background:#f0faf2;color:#1b3a2a}
+.font-baloo{font-family:'Baloo 2',cursive}
+.card{background:#fff;border-radius:18px;border:1px solid #d8f0de;box-shadow:0 6px 20px rgba(27,107,54,.07)}
+.btn{padding:10px 16px;border-radius:999px;border:none;font-weight:800;cursor:pointer;font-family:'Baloo 2';transition:.2s;font-size:12px}
+.btn:active{transform:scale(.97)}
+.btn-green{background:#1b6b36;color:#fff}
+.btn-yellow{background:#ffcf4d;color:#5a4100;border:1px solid #f1c02f}
+.btn-ghost{background:#f2faf4;border:1px solid #d8f0de;color:#1b6b36}
+.btn-red{background:#ffeaea;border:1px solid #ffc9c9;color:#8b1a1a}
+.btn-blue{background:#eef2ff;border:1px solid #c9d5ff;color:#2a3a8b}
+.misi-card{cursor:pointer;transition:.15s}
+.misi-card:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(0,0,0,.1)}
+.confetti{position:fixed;top:-10px;font-size:20px;animation:fall 3s linear forwards;pointer-events:none;z-index:9999}
+@keyframes fall{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(110vh) rotate(720deg)}}
+.ind-badge{padding:3px 8px;border-radius:999px;font-size:9px;font-weight:800;border:1px solid;display:inline-block}
+.ind-mandiri{background:#e7f6eb;border-color:#c8e8ce;color:#1b6b36}
+.ind-kasih{background:#fff2f5;border-color:#ffc9d5;color:#8b1a3d}
+.ind-sopan{background:#eef2ff;border-color:#c9d5ff;color:#2a3a8b}
+.ind-karakter{background:#fff7dc;border-color:#ffe9a8;color:#6b5a1e}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1b6b36;color:#fff;padding:9px 16px;border-radius:999px;font-size:11px;font-weight:800;z-index:9999}
+.kelas-tab{padding:7px 14px;border-radius:999px;font-size:11px;font-weight:800;cursor:pointer;border:1px solid #d8f0de;background:#f2faf4;color:#1b3a2a;transition:.15s;white-space:nowrap}
+.kelas-tab.active{background:#1b6b36;color:#fff;border-color:#1b6b36}
+input,textarea,select{font-family:Nunito,sans-serif}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<input type="file" id="fileInput" accept="image/*" style="display:none">
+<script>
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbymWPYc0yCDp0rT8Wm_leecgWLzwyrZ35qDI87ZCwOXJXpVy_OWAJWDDiv3dWuDKmTZxw/exec";
+const KB2_NAMES = ["abidar","aga","sarfaraz","raykarl","zayn","hanif","haikal","arya","abie","abyan","fassya","kinza","feli","zahira","qhaira","sena","gra","kenzo","yusuf","kai","ibnu","queena","aleena","asha","eiliya","jenna","zea","zura","zalina","shabira"];
+const DEFAULT_KELAS = ["KB1","KB2","TK A1","TK A2","TK A3","TK A4","TK B1","TK B2","TK B3","TK B4"];
+const DEFAULT_MISSIONS = [
+{id:"cium_tangan", judul:"Cium Tangan & Peluk Ayah Bunda", deskripsi:"Pagi hari cium tangan, peluk dan ucap salam", indikator:"Kasih Sayang", icon:"🤲"},
+{id:"beres_mainan", judul:"Bantu Bereskan Mainan", deskripsi:"Bereskan mainan sendiri setelah bermain", indikator:"Mandiri", icon:"🧸"},
+{id:"ucap_terima", judul:"Ucapkan Terima Kasih", deskripsi:"Ucapkan terima kasih setelah dibantu", indikator:"Sopan", icon:"🙏"},
+{id:"doa_ayahbunda", judul:"Doakan Ayah Bunda", deskripsi:"Berdoa untuk Ayah Bunda setelah sholat", indikator:"Karakter", icon:"🤲"},
+{id:"bantu_dirumah", judul:"Bantu Pekerjaan Rumah", deskripsi:"Bantu menyapu atau merapikan tempat tidur", indikator:"Mandiri", icon:"🧹"},
+{id:"sopan_santun", judul:"Bicara Sopan & Santun", deskripsi:"Bicara lembut dan santun kepada Ayah Bunda", indikator:"Sopan", icon:"😊"},
+{id:"berbagi", judul:"Berbagi dengan Saudara", deskripsi:"Berbagi mainan atau makanan", indikator:"Kasih Sayang", icon:"💝"},
+{id:"taat_aturan", judul:"Taat Aturan di Rumah", deskripsi:"Mendengarkan nasihat Ayah Bunda", indikator:"Karakter", icon:"⭐"}
+];
+const INDIKATOR_LIST = ["Mandiri","Kasih Sayang","Sopan","Karakter"];
+
+function normalizeKelas(k){
+  if(!k) return 'KB2';
+  // Hapus spasi, uppercase, trim
+  let nk = k.toString().toUpperCase().replace(/\s+/g,'').trim();
+  // Mapping: KB 2 -> KB2, KB 1 -> KB1, TKA1 -> TK A1? Kita simpan versi ada spasi untuk display tapi normalisasi untuk filter
+  // Untuk display, kita akan pakai format dengan spasi: KB2 -> KB2, TKA1 -> TK A1
+  if(nk==='KB2' || nk==='KB 2' || nk==='KB2 ') return 'KB2';
+  if(nk==='KB1' || nk==='KB 1') return 'KB1';
+  // TK A1 -> TKA1, TK A2 -> TKA2, dll -> normalisasi ke TKA1
+  nk = nk.replace('TKA','TK A').replace('TKB','TK B');
+  // Tapi untuk storage kita simpan tanpa spasi biar konsisten, display kita kasih spasi
+  // Simpan sebagai KB2, TKA1, TKB1 dll tanpa spasi untuk konsistensi internal
+  // Tapi untuk user display kita tampilkan dengan spasi
+  return nk.replace(/\s+/g,'').toUpperCase(); // KB2, TKA1, TKB1
+}
+
+function displayKelas(k){
+  // Tampilkan dengan spasi biar cantik: KB2 -> KB2, TKA1 -> TK A1
+  if(!k) return 'KB2';
+  let nk = k.toString().toUpperCase().trim();
+  nk = nk.replace(/\s+/g,'');
+  if(nk==='KB1') return 'KB1';
+  if(nk==='KB2') return 'KB2';
+  if(nk.startsWith('TKA')) return 'TK A' + nk.replace('TKA','');
+  if(nk.startsWith('TKB')) return 'TK B' + nk.replace('TKB','');
+  return k;
+}
+
+function getDeviceId(){ let id=localStorage.getItem('deviceId'); if(!id){ id='dev-'+Math.random().toString(36).substring(2,7); localStorage.setItem('deviceId',id);} return id; }
+
+function initAnandas(){
+  const saved = localStorage.getItem('anandas');
+  let list=[];
+  if(saved){
+    try{ 
+      const parsed = JSON.parse(saved);
+      if(parsed && parsed.length>0){
+        // MIGRASI: Normalisasi kelas lama yang pakai spasi
+        list = parsed.map(a=>({
+          nama: (a.nama||'').toLowerCase().trim(),
+          kelas: normalizeKelas(a.kelas||'KB2'),
+          missions: a.missions||{}
+        }));
+        // Jika ada yang kelasnya KB 2 dengan spasi, sudah dinormalisasi jadi KB2
+        // Cek apakah KB2 masih 0? Jika ya, tambahkan lagi 31 nama
+        const kb2Count = list.filter(a=>normalizeKelas(a.kelas)==='KB2').length;
+        if(kb2Count===0){
+          // Data lama mungkin pakai KB 2 dengan spasi tapi sudah dinormalisasi, tapi kalau memang kosong, tambah lagi
+          // Jangan duplicate, cek nama
+          const existingNames = list.map(a=>a.nama);
+          KB2_NAMES.forEach(n=>{
+            if(!existingNames.includes(n)){
+              list.push({nama:n, kelas:'KB2', missions:{}});
+            }
+          });
+        }
+        return list;
+      }
+    }catch(e){}
+  }
+  // Default baru
+  KB2_NAMES.forEach(n=> list.push({nama:n, kelas:'KB2', missions:{}}));
+  return list;
+}
+
+let state={
+  role:'wali',
+  selectedKelas:'KB2',
+  selectedAnanda:null,
+  selectedMisi:null,
+  guruLogin:localStorage.getItem('guruLogin')==='true',
+  editBerandaMode:false,
+  editMisiMode:false,
+  editKelasMode:false,
+  beranda: JSON.parse(localStorage.getItem('beranda')||'{"judul":"Misi Anak Hebat - Birrul Walidain","ayat":"Dan Kami perintahkan kepada manusia agar berbuat baik kepada kedua orang tuanya (QS. Al-Ankabut:8)","sambutan":"Assalamualaikum Ayah Bunda Hebat! Pilih jenjang kelas Ananda, upload bukti foto dan cerita setiap hari."}'),
+  missions: JSON.parse(localStorage.getItem('missions')||JSON.stringify(DEFAULT_MISSIONS)),
+  kelasList: JSON.parse(localStorage.getItem('kelasList')||JSON.stringify(DEFAULT_KELAS)).map(k=>normalizeKelas(k)),
+  anandas: initAnandas(),
+  sheetUrl: SHEET_URL,
+  lastSync: localStorage.getItem('lastSync')||'Belum sync'
+};
+
+// Pastikan kelasList selalu normalisasi dan unik
+state.kelasList = [...new Set(state.kelasList.map(k=>normalizeKelas(k)))];
+if(state.kelasList.length===0) state.kelasList = DEFAULT_KELAS.map(k=>normalizeKelas(k));
+
+function saveLocal(){
+  localStorage.setItem('anandas', JSON.stringify(state.anandas));
+  localStorage.setItem('missions', JSON.stringify(state.missions));
+  localStorage.setItem('beranda', JSON.stringify(state.beranda));
+  localStorage.setItem('kelasList', JSON.stringify(state.kelasList));
+  localStorage.setItem('guruLogin', state.guruLogin?'true':'false');
+  // Debug
+  console.log('Saved anandas:', state.anandas.length, 'KB2:', state.anandas.filter(a=>normalizeKelas(a.kelas)==='KB2').length);
+}
+
+function mergeAnandas(oldList,newList){
+  const map={};
+  (oldList||[]).forEach(a=>{ const k=((normalizeKelas(a.kelas)||'')+'|'+(a.nama||'')).toLowerCase().trim(); if(k) map[k]=JSON.parse(JSON.stringify(a)); });
+  (newList||[]).forEach(newA=>{
+    const k=((normalizeKelas(newA.kelas)||'')+'|'+(newA.nama||'')).toLowerCase().trim(); if(!k) return;
+    const oldA=map[k]||{nama:newA.nama,kelas:normalizeKelas(newA.kelas),missions:{}};
+    const mergedMissions={...(oldA.missions||{})};
+    for(let mid in (newA.missions||{})){
+      if(newA.missions[mid]&&typeof newA.missions[mid]==='object'){
+        const oldProg=mergedMissions[mid]||{}; const newProg=newA.missions[mid];
+        mergedMissions[mid]={...oldProg,...newProg, foto:newProg.foto||oldProg.foto||'', bintang:newProg.bintang||oldProg.bintang||0, komentar:newProg.komentar||oldProg.komentar||'', selesai:newProg.selesai||oldProg.selesai||false, indikator:newProg.indikator||oldProg.indikator||''};
+      }
+    }
+    map[k]={nama:newA.nama||oldA.nama, kelas:normalizeKelas(newA.kelas||oldA.kelas), missions:mergedMissions};
+  });
+  return Object.values(map);
+}
+
+function compressImage(file){
+  return new Promise(resolve=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        let w=img.width,h=img.height; const max=600;
+        if(w>max||h>max){ if(w>h){h=h*max/w;w=max;}else{w=w*max/h;h=max;} }
+        canvas.width=w; canvas.height=h; canvas.getContext('2d').drawImage(img,0,0,w,h);
+        let b64=canvas.toDataURL('image/jpeg',0.5);
+        if(b64.length>35000){ canvas.width=w*0.6; canvas.height=h*0.6; canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height); b64=canvas.toDataURL('image/jpeg',0.35); }
+        resolve({base64:b64, info:`${(file.size/1024/1024).toFixed(2)}MB→${(b64.length*0.75/1024).toFixed(0)}KB`});
+      }; img.src=e.target.result;
+    }; reader.readAsDataURL(file);
+  });
+}
+
+function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3000); }
+
+async function syncToSheets(isAuto=false){
+  const btn=document.getElementById('syncBtn');
+  if(btn&&!isAuto){ btn.textContent='⏳ Menyimpan...'; btn.disabled=true; }
+  if(!isAuto) toast('🔄 Sync...');
+  try{
+    let latest=null;
+    try{ const res=await fetch(state.sheetUrl+'?t='+Date.now()); const txt=await res.text(); latest=JSON.parse(txt); if(latest.anandas){ state.anandas=mergeAnandas(latest.anandas, state.anandas); if(latest.missions&&latest.missions.length>0) state.missions=latest.missions; if(latest.kelasList&&latest.kelasList.length>0) state.kelasList=latest.kelasList.map(k=>normalizeKelas(k)); else if(latest.classes&&latest.classes.length>0) state.kelasList=latest.classes.map(k=>normalizeKelas(k)); if(latest.beranda&&latest.beranda.judul) state.beranda=latest.beranda; saveLocal(); } }catch(e){ console.log('load skip', e); }
+    const payload={type:'misi_anak_hebat_v10_1', timestamp:new Date().toISOString(), deviceId:getDeviceId(), classes:state.kelasList, kelasList:state.kelasList, missions:state.missions, anandas:state.anandas, beranda:state.beranda};
+    const res=await fetch(state.sheetUrl,{method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(payload)});
+    const txt=await res.text(); let j; try{ j=JSON.parse(txt);}catch(e){j={};}
+    state.lastSync=new Date().toLocaleString('id-ID'); localStorage.setItem('lastSync',state.lastSync);
+    if(j.status==='ok'){ toast(`✅ ${j.totalInSheet||state.anandas.length} ananda`); if(!isAuto) alert(`✅ Berhasil Simpan!\n\nKelas: ${state.kelasList.map(displayKelas).join(', ')}\nAnanda: ${j.totalInSheet||state.anandas.length} (KB2: ${state.anandas.filter(a=>normalizeKelas(a.kelas)==='KB2').length})\nMisi: ${state.missions.length}\n\nCek Sheet!`); } else { if(!isAuto) alert(`Terkirim: ${txt.substring(0,300)}`); }
+  }catch(err){ toast('❌ '+err.message); if(!isAuto) alert('Gagal: '+err.message); }
+  if(btn){ btn.textContent='⬆️ Simpan LIVE'; btn.disabled=false; }
+  render();
+}
+
+async function loadFromSheets(){
+  toast('🔄 Load...');
+  try{
+    const res=await fetch(state.sheetUrl+'?t='+Date.now());
+    const txt=await res.text();
+    const data=JSON.parse(txt);
+    if(data.anandas){
+      state.anandas=mergeAnandas(data.anandas, state.anandas);
+      if(data.missions&&data.missions.length>0) state.missions=data.missions;
+      if(data.kelasList&&data.kelasList.length>0) state.kelasList=data.kelasList.map(k=>normalizeKelas(k));
+      else if(data.classes&&data.classes.length>0) state.kelasList=data.classes.map(k=>normalizeKelas(k));
+      if(data.beranda&&data.beranda.judul) state.beranda=data.beranda;
+      saveLocal(); render(); toast(`✅ Load ${data.anandas.length} ananda`); alert(`✅ Load Berhasil!\n\n${data.anandas.length} ananda\nKB2: ${state.anandas.filter(a=>normalizeKelas(a.kelas)==='KB2').length}\nKelas: ${state.kelasList.map(displayKelas).join(', ')}`);
+    } else alert('Sheet kosong, akan pakai data lokal 31 anak KB2');
+  }catch(e){ alert('Gagal: '+e.message+'\n\nTetap pakai data lokal: KB2='+state.anandas.filter(a=>normalizeKelas(a.kelas)==='KB2').length); }
+}
+
+function confetti(){ for(let i=0;i<20;i++){ const d=document.createElement('div'); d.className='confetti'; d.style.left=Math.random()*100+'vw'; d.textContent=['🎉','⭐','💖'][i%3]; document.body.appendChild(d); setTimeout(()=>d.remove(),3000); } }
+function getIndikatorClass(ind){ const i=(ind||'').toLowerCase(); if(i.includes('mandiri')) return 'ind-mandiri'; if(i.includes('kasih')) return 'ind-kasih'; if(i.includes('sopan')) return 'ind-sopan'; return 'ind-karakter'; }
+
+function render(){
+  const app=document.getElementById('app');
+  let html=`<div style="background:#fff;border-bottom:1px solid #d8f0de;position:sticky;top:0;z-index:100;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+    <div style="display:flex;gap:8px;align-items:center"><div style="width:32px;height:32px;background:#1b6b36;border-radius:8px;display:grid;place-items:center;color:#fff;font-family:Baloo 2;font-size:14px">M</div><div><div class="font-baloo" style="font-weight:800;font-size:13px;line-height:1">Misi Anak Hebat V10.1</div><div style="font-size:8px;color:#1b6b36;font-weight:800">FIX KB 0 • Per Jenjang • Edit Semua</div></div></div>
+    <div style="display:flex;gap:4px"><button class="btn btn-ghost" style="padding:5px 9px;font-size:9px" onclick="state.role='wali';state.selectedAnanda=null;state.editBerandaMode=false;render()">Wali</button><button class="btn ${state.guruLogin?'btn-green':'btn-ghost'}" style="padding:5px 9px;font-size:9px" onclick="showGuru()">${state.guruLogin?'Guru ✅':'Guru'}</button></div></div>`;
+
+  if(state.role==='wali' && state.selectedAnanda===null){
+    const totalSelesai=state.anandas.reduce((s,a)=>s+Object.values(a.missions||{}).filter(m=>m.selesai).length,0);
+    const kb2Count = state.anandas.filter(a=>normalizeKelas(a.kelas)==='KB2').length;
+    html+=`<div style="max-width:1100px;margin:0 auto;padding:10px">`;
+
+    if(state.editBerandaMode && state.guruLogin){
+      html+=`<div class="card" style="padding:14px;margin-bottom:10px;border:2px solid #1b6b36"><div class="font-baloo" style="font-weight:800;font-size:12px;margin-bottom:8px">✏️ Edit Beranda</div><div style="display:grid;gap:6px">
+        <label style="font-size:10px;font-weight:800">Judul</label><input id="editJudul" value="${state.beranda.judul.replace(/"/g,'&quot;')}" style="padding:8px;border-radius:8px;border:1px solid #d8f0de;width:100%;font-size:12px">
+        <label style="font-size:10px;font-weight:800">Ayat</label><input id="editAyat" value="${state.beranda.ayat.replace(/"/g,'&quot;')}" style="padding:8px;border-radius:8px;border:1px solid #d8f0de;width:100%;font-size:12px">
+        <label style="font-size:10px;font-weight:800">Sambutan</label><textarea id="editSambutan" style="padding:8px;border-radius:8px;border:1px solid #d8f0de;width:100%;min-height:60px;font-size:11px">${state.beranda.sambutan}</textarea>
+        <div style="display:flex;gap:6px;margin-top:4px"><button class="btn btn-green" style="flex:1" onclick="saveBeranda()">💾 Simpan Beranda</button><button class="btn btn-ghost" style="flex:1" onclick="state.editBerandaMode=false;render()">Batal</button></div></div></div>`;
+    } else {
+      html+=`<div class="card" style="padding:12px;margin-bottom:10px;background:linear-gradient(135deg,#e7f6eb,#fff7dc)"><div style="display:flex;justify-content:space-between"><div><div class="font-baloo" style="font-size:16px;font-weight:800">${state.beranda.judul}</div><div style="font-size:10px;color:#6b8a74;margin:4px 0;font-style:italic">"${state.beranda.ayat}"</div><div style="font-size:11px">${state.beranda.sambutan}</div></div>${state.guruLogin?`<button class="btn btn-ghost" style="padding:5px 8px;font-size:9px;height:fit-content" onclick="state.editBerandaMode=true;render()">✏️ Edit</button>`:''}</div><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:8px"><span style="background:#1b6b36;color:#fff;padding:4px 8px;border-radius:999px;font-size:9px;font-weight:800">${state.kelasList.length} Jenjang • ${state.anandas.length} Ananda (KB2: ${kb2Count}) • ${totalSelesai} Misi</span><span style="background:#fff;border:1px solid #d8f0de;padding:4px 8px;border-radius:999px;font-size:9px">Sync: ${state.lastSync}</span></div><div style="margin-top:6px;font-size:9px;background:#fff7dc;border:1px solid #ffe9a8;padding:5px 8px;border-radius:6px">⚠️ FIX KB 0: Kalau KB2 masih 0, klik tombol <b>Reset KB2 31 Anak</b> di bawah!</div></div>`;
+    }
+
+    html+=`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div class="font-baloo" style="font-weight:800;font-size:12px">Pilih Jenjang Kelas 👇</div><div style="display:flex;gap:4px"><button class="btn btn-yellow" style="padding:4px 8px;font-size:9px" onclick="resetKB2()">🔄 Reset KB2 31 Anak</button>${state.guruLogin?`<button class="btn btn-yellow" style="padding:4px 8px;font-size:9px" onclick="state.editKelasMode=!state.editKelasMode;render()">${state.editKelasMode?'✅ Selesai':'✏️ Edit Kelas'}</button>`:''}</div></div><div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px">`;
+    state.kelasList.forEach(k=>{
+      const normalized = normalizeKelas(k);
+      const count=state.anandas.filter(a=>normalizeKelas(a.kelas)===normalized).length;
+      html+=`<div class="kelas-tab ${normalizeKelas(state.selectedKelas)===normalized?'active':''}" onclick="state.selectedKelas='${k}';render()">${displayKelas(k)} (${count})</div>`;
+    });
+    html+=`</div>`;
+
+    if(state.editKelasMode && state.guruLogin){
+      html+=`<div class="card" style="padding:10px;margin-top:8px;border:2px solid #ffcf4d"><div style="font-size:11px;font-weight:800;margin-bottom:6px">✏️ Edit Jenjang - Tambah/Hapus Kelas</div><div style="display:grid;gap:6px">`;
+      state.kelasList.forEach((k,idx)=>{
+        const count=state.anandas.filter(a=>normalizeKelas(a.kelas)===normalizeKelas(k)).length;
+        html+=`<div style="display:flex;gap:6px;align-items:center;background:#f9f9f9;padding:6px 8px;border-radius:10px"><input id="kelas_${idx}" value="${k}" style="flex:1;padding:6px;border-radius:8px;border:1px solid #d8f0de;font-size:11px;font-weight:700"><span style="font-size:10px;background:#e7f6eb;padding:2px 6px;border-radius:999px">${count} anak</span><button class="btn btn-red" style="padding:4px 8px;font-size:10px" onclick="hapusKelas(${idx})">🗑️</button></div>`;
+      });
+      html+=`<div style="display:flex;gap:6px;margin-top:6px"><input id="newKelasName" placeholder="Nama kelas baru, contoh: TK A5" style="flex:1;padding:8px;border-radius:10px;border:1px solid #d8f0de;font-size:11px"><button class="btn btn-green" style="padding:6px 12px" onclick="tambahKelas()">+ Tambah Kelas</button></div><div style="display:flex;gap:6px;margin-top:8px"><button class="btn btn-green" style="flex:1" onclick="saveKelas()">💾 Simpan Kelas</button><button class="btn btn-ghost" style="flex:1" onclick="state.editKelasMode=false;render()">Tutup</button></div></div>`;
+    }
+    html+=`</div>`;
+
+    const filtered = state.anandas.filter(a=>normalizeKelas(a.kelas)===normalizeKelas(state.selectedKelas));
+    html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div class="font-baloo" style="font-weight:800;font-size:12px">${displayKelas(state.selectedKelas)}: ${filtered.length} Ananda</div><div style="display:flex;gap:4px"><button class="btn btn-ghost" style="padding:4px 8px;font-size:9px" onclick="loadFromSheets()">⬇️ Load</button><button id="syncBtn" class="btn btn-green" style="padding:4px 8px;font-size:9px" onclick="syncToSheets()">⬆️ Simpan</button>${state.guruLogin?`<button class="btn btn-blue" style="padding:4px 8px;font-size:9px" onclick="showTambahAnanda()">+ Anak</button>`:''}</div></div>`;
+
+    if(state.guruLogin){
+      html+=`<div id="tambahAnandaBox" style="display:none" class="card" style="padding:10px;margin-bottom:8px;border:2px solid #c9d5ff"><div style="font-size:11px;font-weight:800;margin-bottom:6px">+ Tambah Ananda ke ${displayKelas(state.selectedKelas)}</div><div style="display:flex;gap:6px"><input id="newAnandaName" placeholder="Nama ananda, contoh: ahmad" style="flex:1;padding:8px;border-radius:10px;border:1px solid #d8f0de;font-size:11px"><button class="btn btn-green" onclick="tambahAnanda()">+ Tambah</button></div><div style="margin-top:6px;font-size:9px;color:#6b8a74">Pisahkan koma untuk banyak: ahmad, budi, caca</div></div>`;
+    }
+
+    if(filtered.length===0){
+      html+=`<div class="card" style="padding:24px;text-align:center;color:#9aaea0;font-size:12px">Belum ada ananda di ${displayKelas(state.selectedKelas)}<br>${state.selectedKelas==='KB2' || normalizeKelas(state.selectedKelas)==='KB2' ? `<button class="btn btn-green" style="margin-top:10px" onclick="resetKB2()">🔄 Reset KB2 31 Anak Sekarang</button>` : (state.guruLogin?'Klik + Anak untuk tambah':'')}<br><br><span style="font-size:10px">KB2 seharusnya 31 anak: abidar, aga, dll</span></div>`;
+    } else {
+      html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px">`;
+      filtered.forEach((a,globalIdx)=>{
+        const idx = state.anandas.findIndex(x=>x.nama===a.nama && normalizeKelas(x.kelas)===normalizeKelas(a.kelas));
+        const selesai=Object.values(a.missions||{}).filter(m=>m.selesai).length; const bintang=Object.values(a.missions||{}).reduce((s,m)=>s+(m.bintang||0),0);
+        html+=`<div class="card misi-card" style="padding:10px;position:relative"><div style="position:absolute;top:4px;right:4px">${state.guruLogin?`<span style="cursor:pointer;font-size:10px" onclick="event.stopPropagation();hapusAnanda(${idx})">🗑️</span>`:''}</div><div style="font-weight:800;text-transform:capitalize;font-size:12px" onclick="openAnanda(${idx})">${a.nama}</div><div style="font-size:9px;color:#6b8a74" onclick="openAnanda(${idx})">${displayKelas(a.kelas)} • ${selesai}/8 • ${bintang}⭐</div><div style="margin-top:4px;height:3px;background:#e7f6eb;border-radius:999px" onclick="openAnanda(${idx})"><div style="height:100%;width:${selesai/8*100}%;background:#1b6b36"></div></div><button class="btn btn-ghost" style="width:100%;margin-top:6px;padding:4px;font-size:9px" onclick="openAnanda(${idx})">Buka Misi</button></div>`;
+      });
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+  }
+
+  if(state.selectedAnanda!==null){
+    const ananda=state.anandas[state.selectedAnanda];
+    html+=`<div style="max-width:900px;margin:0 auto;padding:10px"><button class="btn btn-ghost" style="margin-bottom:8px;padding:6px 10px;font-size:10px" onclick="state.selectedAnanda=null;state.selectedMisi=null;render()">⬅ Kembali ke ${displayKelas(ananda.kelas)}</button><div class="card" style="padding:12px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div class="font-baloo" style="font-size:16px;font-weight:800;text-transform:capitalize">${ananda.nama} - ${displayKelas(ananda.kelas)}</div><div style="font-size:10px;color:#6b8a74">${Object.values(ananda.missions||{}).filter(m=>m.selesai).length}/8 Selesai</div></div><button id="syncBtn" class="btn btn-green" style="padding:5px 10px;font-size:10px" onclick="syncToSheets()">⬆️ Simpan</button></div></div><div style="display:grid;gap:8px">`;
+    state.missions.forEach(misi=>{
+      const prog=(ananda.missions||{})[misi.id]||{};
+      html+=`<div class="card misi-card" style="padding:10px;border-left:4px solid ${prog.selesai?'#1b6b36':'#ffcf4d'}" onclick="openMisi('${misi.id}')"><div style="display:flex;gap:8px"><div style="font-size:18px">${misi.icon}</div><div style="flex:1"><div style="display:flex;justify-content:space-between;align-items:center"><div class="font-baloo" style="font-weight:800;font-size:12px">${misi.judul}</div><div style="display:flex;gap:4px;align-items:center"><span class="ind-badge ${getIndikatorClass(misi.indikator)}">${misi.indikator}</span>${prog.selesai?'<span style="font-size:9px;background:#e7f6eb;padding:2px 5px;border-radius:999px">✅</span>':''}</div></div><div style="font-size:10px;color:#6b8a74">${misi.deskripsi}</div>${prog.bintang?`<div style="font-size:10px;margin-top:2px">${'⭐'.repeat(prog.bintang)} ${prog.bintang} bintang</div>`:''}${prog.komentar?`<div style="margin-top:4px;background:#f6fbf6;padding:4px 6px;border-radius:6px;font-size:10px">📝 ${prog.komentar.substring(0,100)}</div>`:''}${prog.foto?`<img src="${prog.foto}" style="margin-top:4px;width:100%;max-width:220px;border-radius:8px;border:1px solid #d8f0de">`:''}</div></div></div>`;
+    });
+    html+=`</div>`;
+    if(state.selectedMisi){
+      const misi=state.missions.find(x=>x.id===state.selectedMisi); const prog=(ananda.missions||{})[misi.id]||{};
+      html+=`<div style="position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);z-index:200;display:grid;place-items:center;padding:10px" onclick="if(event.target===this){state.selectedMisi=null;render()}"><div class="card" style="width:100%;max-width:420px;padding:14px;max-height:92vh;overflow:auto"><div style="display:flex;justify-content:space-between"><div><div class="font-baloo" style="font-weight:800;font-size:13px">${misi.icon} ${misi.judul}</div><span class="ind-badge ${getIndikatorClass(misi.indikator)}" style="margin-top:4px;display:inline-block">${misi.indikator}</span></div><button class="btn btn-ghost" style="padding:4px 8px" onclick="state.selectedMisi=null;render()">✕</button></div><div style="font-size:10px;color:#6b8a74;margin:6px 0">${misi.deskripsi}</div>${prog.foto?`<img src="${prog.foto}" style="width:100%;border-radius:8px;margin:6px 0"><div style="font-size:9px;color:#6b8a74">${prog.compressInfo||''}</div>`:`<div style="padding:14px;border:2px dashed #d8f0de;border-radius:8px;text-align:center;color:#9aaea0;font-size:10px">Belum ada bukti</div>`}<button class="btn btn-yellow" style="width:100%;margin-top:6px;padding:8px;font-size:10px" onclick="uploadFoto()">📤 ${prog.foto?'Ganti Foto':'Upload Foto'}</button><textarea id="komentar" placeholder="Alhamdulillah hari ini ananda..." style="margin-top:8px;width:100%;min-height:60px;border-radius:8px;border:1px solid #d8f0de;padding:8px;font-size:11px">${prog.komentar||''}</textarea><button class="btn btn-green" style="width:100%;margin-top:8px;padding:10px" onclick="selesaiMisi()">✅ Selesai - Alhamdulillah</button></div></div>`;
+    }
+    html+=`</div>`;
+  }
+
+  if(state.role==='guru'){
+    if(!state.guruLogin){
+      html+=`<div style="max-width:340px;margin:20px auto;padding:14px" class="card"><div class="font-baloo" style="font-size:16px;font-weight:800">Login Guru - Edit Semua</div><div style="font-size:10px;color:#6b8a74">Password: <b>misihebat</b></div><input id="passInput" type="password" placeholder="misihebat" style="margin-top:10px;width:100%;padding:10px 14px;border-radius:999px;border:1px solid #d8f0de"><div style="display:flex;gap:6px;margin-top:8px"><button class="btn btn-ghost" style="flex:1;padding:8px" onclick="state.role='wali';render()">Batal</button><button class="btn btn-green" style="flex:1;padding:8px" onclick="doLoginGuru()">Masuk</button></div></div>`;
+    } else {
+      html+=`<div style="max-width:1100px;margin:0 auto;padding:10px"><div class="card" style="padding:12px;margin-bottom:10px;background:linear-gradient(135deg,#fff7dc,#e7f6eb)"><div class="font-baloo" style="font-weight:800;font-size:13px">Panel Guru V10.1 FIX KB 0 ✅</div><div style="font-size:9px;margin-top:4px;word-break:break-all;background:#fff;padding:5px 8px;border-radius:6px;border:1px solid #d8f0de">🔗 ${state.sheetUrl}</div><div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap"><button id="syncBtn" class="btn btn-green" style="padding:5px 10px;font-size:9px" onclick="syncToSheets()">⬆️ Simpan LIVE</button><button class="btn btn-ghost" style="padding:5px 10px;font-size:9px" onclick="loadFromSheets()">⬇️ Load</button><button class="btn btn-ghost" style="padding:5px 10px;font-size:9px" onclick="testKoneksi()">🔗 Test</button><button class="btn btn-yellow" style="padding:5px 10px;font-size:9px" onclick="resetKB2()">🔄 Reset KB2 31 Anak</button><button class="btn btn-yellow" style="padding:5px 10px;font-size:9px" onclick="state.role='wali';state.editKelasMode=true;render()">✏️ Kelas</button><button class="btn btn-yellow" style="padding:5px 10px;font-size:9px" onclick="state.editMisiMode=!state.editMisiMode;render()">${state.editMisiMode?'✅ Selesai':'✏️ Misi'}</button><button class="btn btn-ghost" style="padding:5px 10px;font-size:9px" onclick="state.guruLogin=false;saveLocal();state.role='wali';render()">Logout</button></div><div style="margin-top:6px;font-size:9px;background:#e7f6eb;border:1px solid #c8e8ce;padding:5px 8px;border-radius:6px">💡 FIX KB 0: Normalisasi otomatis KB 2 (spasi) → KB2. Kalau masih 0, klik Reset KB2 31 Anak. Total sekarang: ${state.anandas.length} anak, KB2: ${state.anandas.filter(a=>normalizeKelas(a.kelas)==='KB2').length}</div></div>`;
+
+      if(state.editMisiMode){
+        html+=`<div class="card" style="padding:12px;margin-bottom:10px;border:2px solid #ffcf4d"><div style="display:flex;justify-content:space-between;align-items:center"><div class="font-baloo" style="font-weight:800;font-size:12px">✏️ Edit Misi & Indikator</div><button class="btn btn-green" style="padding:4px 8px;font-size:9px" onclick="tambahMisi()">+ Misi</button></div><div style="margin-top:8px;display:grid;gap:6px">`;
+        state.missions.forEach((m,idx)=>{
+          html+=`<div style="background:#f9f9f9;border:1px solid #eee;padding:8px;border-radius:10px"><div style="display:grid;grid-template-columns:30px 1fr 90px 60px 30px;gap:4px;align-items:center"><input id="misi_icon_${idx}" value="${m.icon}" style="padding:5px;border-radius:6px;border:1px solid #d8f0de;text-align:center;font-size:12px"><input id="misi_judul_${idx}" value="${m.judul.replace(/"/g,'&quot;')}" style="padding:5px;border-radius:6px;border:1px solid #d8f0de;font-weight:700;font-size:10px"><select id="misi_ind_${idx}" style="padding:5px;border-radius:6px;border:1px solid #d8f0de;font-size:9px">${INDIKATOR_LIST.map(ind=>`<option value="${ind}" ${m.indikator===ind?'selected':''}>${ind}</option>`).join('')}</select><span style="font-size:8px;color:#6b8a74">${m.id.substring(0,8)}</span><button class="btn btn-red" style="padding:3px 5px;font-size:9px" onclick="hapusMisi(${idx})">🗑️</button></div><textarea id="misi_desc_${idx}" style="margin-top:4px;width:100%;padding:5px;border-radius:6px;border:1px solid #d8f0de;font-size:9px;min-height:36px">${m.deskripsi}</textarea></div>`;
+        });
+        html+=`</div><div style="margin-top:8px;display:flex;gap:6px"><button class="btn btn-green" style="flex:1" onclick="saveMisi()">💾 Simpan Misi</button><button class="btn btn-ghost" style="flex:1" onclick="state.editMisiMode=false;render()">Tutup</button></div></div>`;
+      }
+
+      html+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px">`;
+      state.kelasList.forEach(kelasName=>{
+        const anakKelas=state.anandas.filter(a=>normalizeKelas(a.kelas)===normalizeKelas(kelasName));
+        html+=`<div class="card" style="padding:10px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="font-baloo" style="font-weight:800;font-size:12px">${displayKelas(kelasName)} (${anakKelas.length})</div><button class="btn btn-blue" style="padding:3px 6px;font-size:9px" onclick="state.selectedKelas='${kelasName}';state.role='wali';render()">Buka</button></div><div style="margin-top:6px;max-height:180px;overflow:auto;display:grid;gap:3px">`;
+        if(anakKelas.length===0) html+=`<div style="font-size:10px;color:#9aaea0;padding:8px;text-align:center">Kosong${normalizeKelas(kelasName)==='KB2'?'<br><button class="btn btn-green" style="margin-top:6px;padding:4px 8px;font-size:9px" onclick="resetKB2()">🔄 Reset KB2 31 Anak</button>':''}</div>`;
+        anakKelas.forEach(a=>{
+          const idx=state.anandas.findIndex(x=>x.nama===a.nama&&normalizeKelas(x.kelas)===normalizeKelas(a.kelas));
+          const selesai=Object.values(a.missions||{}).filter(m=>m.selesai).length;
+          html+=`<div style="display:flex;justify-content:space-between;align-items:center;background:#f9f9f9;padding:4px 6px;border-radius:6px"><span style="font-size:10px;text-transform:capitalize">${a.nama} (${selesai}/8)</span><span style="display:flex;gap:2px"><span style="font-size:9px;cursor:pointer" onclick="openAnanda(${idx})">👁️</span><span style="font-size:9px;cursor:pointer" onclick="hapusAnanda(${idx})">🗑️</span></span></div>`;
+        });
+        html+=`</div><div style="margin-top:6px;display:flex;gap:4px"><input id="add_${kelasName.replace(/\s+/g,'_')}" placeholder="Nama baru" style="flex:1;padding:5px;border-radius:8px;border:1px solid #d8f0de;font-size:10px"><button class="btn btn-green" style="padding:4px 8px;font-size:9px" onclick="tambahAnandaKeKelas('${kelasName}')">+ Anak</button></div></div>`;
+      });
+      html+=`</div></div>`;
+    }
+  }
+
+  html+=`<div style="margin-top:10px;border-top:1px solid #d8f0de;background:#fff;padding:8px 12px;font-size:9px;color:#6b8a74;display:flex;justify-content:space-between"><div>V10.1 FIX KB 0 • ${state.kelasList.length} Kelas • ${state.anandas.length} Ananda • KB2: ${state.anandas.filter(a=>normalizeKelas(a.kelas)==='KB2').length}</div><div>${new Date().getFullYear()}</div></div>`;
+  app.innerHTML=html;
+}
+
+function openAnanda(i){ state.selectedAnanda=i; state.selectedMisi=null; state.role='wali'; render(); }
+function openMisi(id){ state.selectedMisi=id; render(); }
+function showGuru(){ state.role='guru'; render(); }
+function doLoginGuru(){ const p=(document.getElementById('passInput')?.value||'').trim().toLowerCase(); if(p==='misihebat'){ state.guruLogin=true; saveLocal(); state.role='guru'; render(); toast('✅ Login guru'); } else alert('Password salah: misihebat'); }
+function beriBintang(ai, mi, b){ if(!state.anandas[ai].missions) state.anandas[ai].missions={}; if(!state.anandas[ai].missions[mi]) state.anandas[ai].missions[mi]={}; state.anandas[ai].missions[mi].bintang=b; state.anandas[ai].missions[mi].selesai=true; saveLocal(); render(); toast(`⭐ ${b} bintang`); }
+function uploadFoto(){ document.getElementById('fileInput').click(); }
+document.getElementById('fileInput').addEventListener('change', async e=>{ const f=e.target.files[0]; if(!f) return; const r=await compressImage(f); const an=state.anandas[state.selectedAnanda]; if(!an.missions) an.missions={}; if(!an.missions[state.selectedMisi]) an.missions[state.selectedMisi]={}; an.missions[state.selectedMisi].foto=r.base64; an.missions[state.selectedMisi].compressInfo=r.info; saveLocal(); render(); toast('✅ '+r.info); });
+function selesaiMisi(){ const k=document.getElementById('komentar').value; if(!k.trim()){ alert('Isi cerita dulu'); return; } const an=state.anandas[state.selectedAnanda]; if(!an.missions) an.missions={}; if(!an.missions[state.selectedMisi]) an.missions[state.selectedMisi]={}; const m=state.missions.find(x=>x.id===state.selectedMisi); an.missions[state.selectedMisi].komentar=k; an.missions[state.selectedMisi].judul=m.judul; an.missions[state.selectedMisi].indikator=m.indikator; an.missions[state.selectedMisi].selesai=true; an.missions[state.selectedMisi].waktu=new Date().toLocaleString('id-ID'); saveLocal(); confetti(); render(); setTimeout(()=>{ toast('🎉 Auto save...'); syncToSheets(true); }, 500); }
+
+function saveBeranda(){
+  const judul=document.getElementById('editJudul').value.trim(); const ayat=document.getElementById('editAyat').value.trim(); const sambutan=document.getElementById('editSambutan').value.trim();
+  if(!judul){ alert('Judul kosong'); return; }
+  state.beranda={judul,ayat,sambutan}; saveLocal(); state.editBerandaMode=false; render(); toast('✅ Beranda disimpan'); if(confirm('Simpan ke Sheets?')) syncToSheets();
+}
+function saveKelas(){
+  const newList=[];
+  state.kelasList.forEach((k,idx)=>{
+    const val=document.getElementById(`kelas_${idx}`)?.value.trim();
+    if(val) newList.push(normalizeKelas(val));
+  });
+  const oldList=[...state.kelasList];
+  state.kelasList=[...new Set(newList.map(k=>normalizeKelas(k)))];
+  oldList.forEach((oldK,idx)=>{
+    const newK=state.kelasList[idx];
+    if(newK && normalizeKelas(oldK)!==normalizeKelas(newK)){
+      state.anandas.forEach(a=>{ if(normalizeKelas(a.kelas)===normalizeKelas(oldK)) a.kelas=newK; });
+    }
+  });
+  saveLocal(); state.editKelasMode=false; render(); toast('✅ Kelas disimpan'); if(confirm('Simpan kelas ke Sheets?')) syncToSheets();
+}
+function tambahKelas(){
+  const name=document.getElementById('newKelasName').value.trim();
+  if(!name){ alert('Isi nama kelas'); return; }
+  const norm = normalizeKelas(name);
+  if(state.kelasList.map(k=>normalizeKelas(k)).includes(norm)){ alert('Kelas sudah ada'); return; }
+  state.kelasList.push(norm); saveLocal(); document.getElementById('newKelasName').value=''; render(); toast(`✅ Kelas ${displayKelas(norm)} ditambah`);
+}
+function hapusKelas(idx){
+  const k=state.kelasList[idx];
+  const count=state.anandas.filter(a=>normalizeKelas(a.kelas)===normalizeKelas(k)).length;
+  if(count>0 && !confirm(`Hapus kelas ${displayKelas(k)} yang ada ${count} anak? Anaknya juga akan terhapus!`)) return;
+  if(!confirm(`Hapus kelas ${displayKelas(k)}?`)) return;
+  state.kelasList.splice(idx,1);
+  state.anandas=state.anandas.filter(a=>normalizeKelas(a.kelas)!==normalizeKelas(k));
+  saveLocal(); render(); toast(`🗑️ Kelas ${displayKelas(k)} dihapus`);
+}
+function showTambahAnanda(){ const box=document.getElementById('tambahAnandaBox'); if(box) box.style.display=box.style.display==='none'?'block':'none'; }
+function tambahAnanda(){
+  const input=document.getElementById('newAnandaName'); const names=input.value.split(',').map(s=>s.trim().toLowerCase()).filter(s=>s);
+  if(names.length===0){ alert('Isi nama'); return; }
+  names.forEach(n=>{
+    if(!state.anandas.find(a=>a.nama===n && normalizeKelas(a.kelas)===normalizeKelas(state.selectedKelas))){
+      state.anandas.push({nama:n, kelas:normalizeKelas(state.selectedKelas), missions:{}});
+    }
+  });
+  saveLocal(); input.value=''; render(); toast(`✅ ${names.length} anak ditambah ke ${displayKelas(state.selectedKelas)}`);
+}
+function tambahAnandaKeKelas(kelasName){
+  const id = `add_${kelasName.replace(/\s+/g,'_')}`;
+  const input=document.getElementById(id); if(!input) return;
+  const names=input.value.split(',').map(s=>s.trim().toLowerCase()).filter(s=>s);
+  if(names.length===0){ alert('Isi nama'); return; }
+  names.forEach(n=>{
+    if(!state.anandas.find(a=>a.nama===n && normalizeKelas(a.kelas)===normalizeKelas(kelasName))){
+      state.anandas.push({nama:n, kelas:normalizeKelas(kelasName), missions:{}});
+    }
+  });
+  saveLocal(); input.value=''; render(); toast(`✅ ${names.length} anak ditambah ke ${displayKelas(kelasName)}`);
+  if(confirm(`Simpan ${displayKelas(kelasName)} ke Sheets?`)) syncToSheets();
+}
+function hapusAnanda(idx){
+  if(!confirm(`Hapus ananda ${state.anandas[idx].nama} (${displayKelas(state.anandas[idx].kelas)})?`)) return;
+  state.anandas.splice(idx,1); saveLocal(); render(); toast('🗑️ Ananda dihapus');
+}
+function saveMisi(){
+  const newMissions=[];
+  state.missions.forEach((m,idx)=>{
+    const icon=document.getElementById(`misi_icon_${idx}`)?.value||m.icon;
+    const judul=document.getElementById(`misi_judul_${idx}`)?.value||m.judul;
+    const desc=document.getElementById(`misi_desc_${idx}`)?.value||m.deskripsi;
+    const ind=document.getElementById(`misi_ind_${idx}`)?.value||m.indikator;
+    if(judul.trim()) newMissions.push({id:m.id, judul:judul.trim(), deskripsi:desc.trim(), indikator:ind, icon:icon.trim()||'⭐'});
+  });
+  state.missions=newMissions; saveLocal(); state.editMisiMode=false; render(); toast('✅ Misi disimpan'); if(confirm('Simpan misi ke Sheets?')) syncToSheets();
+}
+function tambahMisi(){ const id='misi_'+Date.now(); state.missions.push({id, judul:'Misi Baru', deskripsi:'Deskripsi', indikator:'Karakter', icon:'⭐'}); saveLocal(); render(); toast('✅ Misi baru'); }
+function hapusMisi(idx){ if(!confirm(`Hapus misi "${state.missions[idx].judul}"?`)) return; state.missions.splice(idx,1); saveLocal(); render(); toast('🗑️ Misi dihapus'); }
+
+function resetKB2(){
+  if(!confirm(`Reset KB2 jadi 31 anak?\n\nAnak KB2 yang ada sekarang: ${state.anandas.filter(a=>normalizeKelas(a.kelas)==='KB2').length}\n\nIni akan menambah 31 nama: abidar, aga, sarfaraz, dll (yang belum ada). Lanjutkan?`)) return;
+  const existingNames = state.anandas.filter(a=>normalizeKelas(a.kelas)==='KB2').map(a=>a.nama);
+  let added=0;
+  KB2_NAMES.forEach(n=>{
+    if(!existingNames.includes(n)){
+      state.anandas.push({nama:n, kelas:'KB2', missions:{}});
+      added++;
+    }
+  });
+  // Pastikan KB2 ada di kelasList
+  if(!state.kelasList.map(k=>normalizeKelas(k)).includes('KB2')){
+    state.kelasList.push('KB2');
+  }
+  saveLocal();
+  render();
+  toast(`✅ KB2 di-reset! Ditambah ${added} anak, total KB2: ${state.anandas.filter(a=>normalizeKelas(a.kelas)==='KB2').length}`);
+  if(confirm(`KB2 sekarang ${state.anandas.filter(a=>normalizeKelas(a.kelas)==='KB2').length} anak. Simpan ke Sheets?`)) syncToSheets();
+}
+
+async function testKoneksi(){ try{ const r=await fetch(state.sheetUrl+'?t='+Date.now()); const t=await r.text(); alert('✅ Koneksi OK V10.1 FIX KB0!\n\nKB2: '+state.anandas.filter(a=>normalizeKelas(a.kelas)==='KB2').length+' anak\nTotal: '+state.anandas.length+' anak\n\n'+t.substring(0,300)+'\n\nURL: '+state.sheetUrl); }catch(e){ alert('❌ '+e.message); } }
+
+// Auto migrasi saat load
+(function(){
+  // Migrasi semua kelas yang ada spasi
+  state.anandas = state.anandas.map(a=>({...a, kelas: normalizeKelas(a.kelas), nama: a.nama.toLowerCase().trim()}));
+  state.kelasList = state.kelasList.map(k=>normalizeKelas(k));
+  saveLocal();
+})();
+
+render();
+</script>
+</body>
+</html>
